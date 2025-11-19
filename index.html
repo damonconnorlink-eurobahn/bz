@@ -1,0 +1,471 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Tagesbericht BZ Duisburg | Eurobahn</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- GSAP Animation -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+    
+    <!-- Icons & Fonts -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@300;400;600;800&display=swap" rel="stylesheet">
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: { sans: ['Manrope', 'sans-serif'] },
+                    colors: {
+                        euro: {
+                            blue: '#030A8C',
+                            teal: '#41A6A6',
+                            dark: '#050505',
+                            light: '#F8FAFC'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        /* GLOBAL SETTINGS */
+        body { 
+            background-color: #050505; 
+            overflow: hidden; 
+            touch-action: none; 
+            color: white;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        /* SLIDE SYSTEM */
+        .slide {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            opacity: 0; visibility: hidden; z-index: 0;
+            display: flex; flex-direction: column; justify-content: center; align-items: center;
+        }
+        .slide.active { opacity: 1; visibility: visible; z-index: 10; }
+
+        /* ANIMATION HELPERS (Startzustand) */
+        .anim-elem { transform: translateY(30px); opacity: 0; }
+
+        /* LOGO FILTERS */
+        .logo-img { transition: filter 0.5s ease; }
+        .logo-img.white-logo { filter: brightness(0) invert(1); } 
+        .logo-img.original-logo { filter: none; }
+
+        /* UI ELEMENTS */
+        .nav-btn {
+            width: 50px; height: 50px; border-radius: 50%;
+            background: rgba(255,255,255,0.1); backdrop-filter: blur(10px);
+            display: flex; align-items: center; justify-content: center;
+            cursor: pointer; border: 1px solid rgba(255,255,255,0.2); transition: all 0.3s ease;
+        }
+        .nav-btn:hover { background: #41A6A6; border-color: #41A6A6; transform: scale(1.1); }
+        
+        /* FULLSCREEN BUTTON */
+        #fs-btn {
+            width: 50px; height: 50px; border-radius: 50%;
+            background: rgba(255,255,255,0.1); backdrop-filter: blur(10px);
+            border: 1px solid rgba(255,255,255,0.2); color: white;
+            display: flex; align-items: center; justify-content: center;
+            cursor: pointer; transition: all 0.3s;
+        }
+        #fs-btn:hover { background: rgba(255,255,255,0.2); transform: scale(1.1); }
+        .light-theme #fs-btn { color: #030A8C; border-color: rgba(3,10,140,0.2); background: rgba(255,255,255,0.5); }
+
+        /* GLASS & CARDS */
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.03); backdrop-filter: blur(15px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .net-card { cursor: pointer; transition: transform 0.3s ease; }
+        .net-card:hover { transform: translateY(-10px); }
+
+        /* GLITCH EFFECT */
+        .glitch { position: relative; color: white; mix-blend-mode: lighten; }
+        .glitch::before, .glitch::after {
+            content: attr(data-text); position: absolute; top: 0; width: 100%; height: 100%; background: #050505;
+        }
+        .glitch::before {
+            left: 2px; text-shadow: 2px 0 #ff00c1; clip-path: inset(44% 0 61% 0); 
+            animation: glitch-anim-1 2s infinite linear alternate-reverse;
+        }
+        .glitch::after {
+            left: -2px; text-shadow: -2px 0 #00fff9; clip-path: inset(50% 0 30% 0); 
+            animation: glitch-anim-2 2.5s infinite linear alternate-reverse;
+        }
+        @keyframes glitch-anim-1 { 0% { clip-path: inset(20% 0 80% 0); } 100% { clip-path: inset(80% 0 20% 0); } }
+        @keyframes glitch-anim-2 { 0% { clip-path: inset(10% 0 60% 0); } 100% { clip-path: inset(10% 0 90% 0); } }
+
+        /* MODAL */
+        #modal-overlay {
+            position: fixed; inset: 0; background: rgba(0,0,0,0.85); backdrop-filter: blur(8px);
+            z-index: 100; opacity: 0; visibility: hidden;
+            display: flex; justify-content: center; align-items: center; transition: all 0.4s;
+        }
+        #modal-overlay.open { opacity: 1; visibility: visible; }
+        #modal-content { transform: scale(0.9); transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1); }
+        #modal-overlay.open #modal-content { transform: scale(1); }
+    </style>
+</head>
+<body>
+
+    <!-- MODAL -->
+    <div id="modal-overlay" onclick="closeModal()">
+        <div id="modal-content" class="bg-[#15151a] border border-euro-teal/30 p-8 rounded-3xl max-w-xl w-full mx-6 relative shadow-2xl" onclick="event.stopPropagation()">
+            <button onclick="closeModal()" class="absolute top-6 right-6 text-white/40 hover:text-white"><i class="fa-solid fa-xmark text-2xl"></i></button>
+            <div class="flex items-center gap-5 mb-8">
+                <div id="modal-icon" class="w-16 h-16 bg-euro-teal rounded-2xl flex items-center justify-center text-white text-2xl shadow-lg"></div>
+                <div>
+                    <h3 id="modal-title" class="text-3xl font-bold text-white"></h3>
+                    <span id="modal-badge" class="bg-euro-blue text-white px-3 py-1 rounded-md text-xs font-bold uppercase mt-1 inline-block"></span>
+                </div>
+            </div>
+            <div class="space-y-6 text-gray-300">
+                <div><p class="text-euro-teal text-xs font-bold uppercase mb-2">Linien</p><p id="modal-lines" class="text-xl text-white font-light"></p></div>
+                <div><p class="text-euro-teal text-xs font-bold uppercase mb-2">Details</p><p id="modal-desc" class="leading-relaxed text-white/80"></p></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- HEADER -->
+    <header class="fixed top-0 left-0 w-full p-6 md:p-8 z-50 flex justify-between items-center pointer-events-none">
+        <img id="euro-logo" src="https://www.eurobahn.de/fileadmin/bilder/logos/logo-eurobahn.svg" class="h-8 md:h-10 w-auto logo-img white-logo">
+        <div id="badge" class="px-4 py-1.5 rounded-full bg-white/10 backdrop-blur text-[10px] md:text-xs font-bold tracking-widest uppercase border border-white/20 text-white transition-all duration-500 shadow-sm">
+            Tagesbericht BZ
+        </div>
+    </header>
+
+    <!-- FOOTER CONTROLS -->
+    <footer class="fixed bottom-0 left-0 w-full p-8 z-50 flex justify-between items-end pointer-events-none">
+        <div id="footer-text" class="text-[10px] font-bold tracking-[0.2em] text-white/40 uppercase pointer-events-auto transition-colors duration-500">
+            © Damon Connor Wohlgemuth-Link
+        </div>
+        <div class="flex gap-4 pointer-events-auto">
+            <button id="fs-btn" onclick="toggleFullScreen()" title="Vollbild"><i class="fa-solid fa-expand"></i></button>
+            <button id="prevBtn" class="nav-btn" onclick="changeSlide(-1)"><i class="fa-solid fa-chevron-left"></i></button>
+            <button id="nextBtn" class="nav-btn" style="background: #41A6A6; border-color: #41A6A6; color: white;" onclick="changeSlide(1)"><i class="fa-solid fa-chevron-right"></i></button>
+        </div>
+    </footer>
+
+    <!-- SLIDES -->
+    <div id="slider">
+
+        <!-- SLIDE 1: HERO -->
+        <div class="slide active bg-gradient-to-br from-euro-blue to-black" data-theme="dark">
+            <div class="absolute top-1/4 left-1/4 w-[50vw] h-[50vw] bg-euro-teal rounded-full blur-[150px] opacity-20 animate-pulse pointer-events-none"></div>
+            <div class="relative z-10 w-full max-w-[90%] mx-auto text-center">
+                <div class="anim-elem">
+                    <span class="inline-block px-4 py-1 mb-8 rounded-full border border-euro-teal text-euro-teal text-xs font-bold tracking-[0.3em] bg-euro-teal/5">
+                        17.11.2025 • DUISBURG
+                    </span>
+                </div>
+                <h1 class="anim-elem text-6xl md:text-8xl lg:text-[9rem] font-black text-white mb-8 tracking-tighter leading-[0.9]">
+                    BETRIEBS<wbr><span class="text-transparent bg-clip-text bg-gradient-to-r from-euro-teal to-white">ZENTRALE</span>
+                </h1>
+                <div class="anim-elem w-32 h-1.5 bg-gradient-to-r from-euro-blue to-euro-teal mx-auto mb-12 rounded-full"></div>
+                <p class="anim-elem text-xl md:text-3xl text-blue-100/90 font-light max-w-5xl mx-auto leading-relaxed">
+                    Einblick in das operative Herz der Eurobahn. <br class="hidden md:block">
+                    Steuerung, Disposition und Kommunikation.
+                </p>
+                <div class="anim-elem mt-16 text-white/50 text-xs uppercase tracking-[0.2em] animate-bounce cursor-pointer" onclick="changeSlide(1)">
+                    Starten <i class="fa-solid fa-arrow-right ml-2"></i>
+                </div>
+            </div>
+        </div>
+
+        <!-- SLIDE 2: START (Light) -->
+        <div class="slide bg-white text-slate-900" data-theme="light">
+            <div class="absolute right-0 top-0 w-1/3 h-full bg-slate-50 transform skew-x-12 origin-top pointer-events-none"></div>
+            <div class="relative z-10 w-full max-w-7xl grid md:grid-cols-2 gap-16 items-center p-6">
+                <div class="anim-elem w-full aspect-[4/3] rounded-[2.5rem] bg-gradient-to-tr from-euro-blue to-euro-teal shadow-2xl flex items-center justify-center relative overflow-hidden group">
+                    <div class="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-20"></div>
+                    <i class="fa-solid fa-location-dot text-9xl text-white drop-shadow-lg transition-transform duration-700 group-hover:scale-110"></i>
+                    <div class="absolute bottom-8 left-8 bg-white px-6 py-3 rounded-2xl shadow-lg flex items-center gap-3">
+                        <i class="fa-regular fa-clock text-euro-blue"></i><span class="font-bold text-euro-blue">09:00 Start</span>
+                    </div>
+                </div>
+                <div class="anim-elem">
+                    <h2 class="text-5xl md:text-7xl font-bold text-euro-blue mb-8">Der Auftakt</h2>
+                    <p class="text-lg md:text-xl text-slate-600 mb-10 leading-relaxed">
+                        Wir starteten direkt im <strong class="text-euro-teal">Live-Betrieb</strong>.
+                        Sofortige Zuteilung zu den Disponenten. Wir saßen direkt am Platz ("Schulterblick") und erlebten den operativen Druck hautnah.
+                    </p>
+                    <div class="flex flex-col gap-4">
+                        <div class="p-5 rounded-2xl border border-slate-200 bg-slate-50 flex items-center gap-5">
+                            <div class="w-12 h-12 rounded-full bg-euro-blue text-white flex items-center justify-center text-xl"><i class="fa-solid fa-eye"></i></div>
+                            <div><h4 class="font-bold text-euro-blue text-lg">Beobachtung</h4><p class="text-sm text-slate-500">Entscheidungen in Echtzeit.</p></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- SLIDE 3: HASTUS (Dark/Glitch) -->
+        <div class="slide bg-[#050505]" data-theme="dark">
+            <div class="absolute inset-0 opacity-20 bg-[radial-gradient(circle,rgba(239,68,68,0.2)_1px,transparent_1px)] [background-size:30px_30px]"></div>
+            <div class="relative z-10 w-full max-w-7xl grid md:grid-cols-2 gap-16 items-center p-6">
+                <div class="anim-elem">
+                    <div class="inline-flex items-center gap-3 px-4 py-2 border border-red-600/50 bg-red-900/20 text-red-500 text-sm font-bold mb-8 rounded-lg animate-pulse">
+                        <i class="fa-solid fa-triangle-exclamation"></i> VORFALL AM MORGEN
+                    </div>
+                    <div class="mb-6 relative">
+                        <h2 class="text-7xl md:text-9xl font-black text-white leading-none glitch" data-text="AUSFALL">AUSFALL</h2>
+                        <h2 class="text-4xl md:text-6xl font-bold text-white/50">HASTUS SYSTEM</h2>
+                    </div>
+                    <div class="h-1.5 w-32 bg-gradient-to-r from-red-600 to-transparent mb-8"></div>
+                    <p class="text-xl md:text-2xl text-gray-400 border-l-4 border-red-600 pl-6 py-2 leading-relaxed">
+                        Bei Ankunft lief das System <strong class="text-white">technisch wieder</strong>.
+                        <br><span class="text-base mt-4 block text-blue-200 opacity-90">
+                            Aber: Massiver Datenverlust des Morgens. Alle Pläne mussten manuell validiert werden.
+                        </span>
+                    </p>
+                </div>
+                <div class="anim-elem">
+                    <div class="bg-black border border-gray-800 rounded-2xl p-8 font-mono text-sm md:text-base shadow-[0_0_60px_rgba(234,88,12,0.15)] relative overflow-hidden">
+                        <div class="absolute top-0 left-0 w-full h-1 bg-white/10 animate-[scan_3s_linear_infinite]"></div>
+                        <div class="flex gap-2 mb-6 border-b border-gray-800 pb-4">
+                            <div class="w-3 h-3 rounded-full bg-green-500"></div><div class="w-3 h-3 rounded-full bg-yellow-500"></div><div class="w-3 h-3 rounded-full bg-gray-500"></div>
+                        </div>
+                        <div class="space-y-4 text-gray-300">
+                            <p>root@bz:~# <span class="text-white">system_status</span></p>
+                            <p class="text-green-500">> SERVER: ONLINE (UPTIME: 0h 42m)</p>
+                            <p class="text-orange-400">> WARNING: DATA INTEGRITY CHECK...</p>
+                            <p class="bg-orange-900/30 text-white inline-block px-2 py-1 rounded">> STATUS: RECOVERY MODE</p>
+                            <p class="text-euro-teal mt-6 border-t border-gray-800 pt-4 uppercase font-bold">> Maßnahmen:</p>
+                            <ul class="list-none pl-4 opacity-80 space-y-2 border-l border-gray-700 ml-1">
+                                <li>[x] Händisches Nachtragen der Pläne</li>
+                                <li>[x] Validierung Zugläufe</li>
+                                <li>[!] Stimmung: <span class="text-orange-500 font-bold">ANGESPANNT</span></li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- SLIDE 4: NETWORKS (Light Grid) -->
+        <div class="slide bg-slate-50" data-theme="light">
+            <div class="relative z-10 w-full max-w-7xl h-full flex flex-col justify-center p-6">
+                <div class="anim-elem text-center mb-12">
+                    <h2 class="text-4xl md:text-6xl font-bold text-euro-blue mb-2">Die Netzstruktur</h2>
+                    <p class="text-slate-500 text-xl">Klicke auf ein Netz für Details.</p>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 h-full md:h-auto overflow-y-auto pb-24 md:pb-0 px-2">
+                    <div onclick="openModal('HWN')" class="net-card anim-elem h-72 bg-euro-blue rounded-3xl p-8 text-white relative overflow-hidden flex flex-col justify-end shadow-xl group">
+                        <div class="absolute top-4 right-4 w-10 h-10 rounded-full bg-white/20 flex items-center justify-center"><i class="fa-solid fa-plus"></i></div>
+                        <span class="absolute top-4 left-6 text-6xl font-black opacity-10">HWN</span>
+                        <h3 class="text-2xl font-bold mb-1">Hellweg</h3>
+                        <div class="mt-4 text-[10px] uppercase bg-black/20 inline-block px-3 py-1 rounded-full w-fit">Rückgrat Ost</div>
+                    </div>
+                    <div onclick="openModal('TWN')" class="net-card anim-elem h-72 bg-euro-teal rounded-3xl p-8 text-white relative overflow-hidden flex flex-col justify-end shadow-xl group">
+                        <div class="absolute top-4 right-4 w-10 h-10 rounded-full bg-white/20 flex items-center justify-center"><i class="fa-solid fa-plus"></i></div>
+                        <span class="absolute top-4 left-6 text-6xl font-black opacity-10">TWN</span>
+                        <h3 class="text-2xl font-bold mb-1">Teuto</h3>
+                        <div class="mt-4 text-[10px] uppercase bg-black/20 inline-block px-3 py-1 rounded-full w-fit">International</div>
+                    </div>
+                    <div onclick="openModal('MRL')" class="net-card anim-elem h-72 bg-[#30348C] rounded-3xl p-8 text-white relative overflow-hidden flex flex-col justify-end shadow-xl group">
+                        <div class="absolute top-4 right-4 w-10 h-10 rounded-full bg-white/20 flex items-center justify-center"><i class="fa-solid fa-plus"></i></div>
+                        <span class="absolute top-4 left-6 text-6xl font-black opacity-10">MRL</span>
+                        <h3 class="text-2xl font-bold mb-1">Maas-Rhein</h3>
+                        <div class="mt-4 text-[10px] uppercase bg-black/20 inline-block px-3 py-1 rounded-full w-fit">Pendlerachse</div>
+                    </div>
+                    <div onclick="openModal('OWL')" class="net-card anim-elem h-72 bg-[#1F2937] rounded-3xl p-8 text-white relative overflow-hidden flex flex-col justify-end shadow-xl group">
+                        <div class="absolute top-4 right-4 w-10 h-10 rounded-full bg-white/20 flex items-center justify-center"><i class="fa-solid fa-plus"></i></div>
+                        <span class="absolute top-4 left-6 text-6xl font-black opacity-10">OWL</span>
+                        <h3 class="text-2xl font-bold mb-1">Ostwestf.</h3>
+                        <div class="mt-4 text-[10px] uppercase bg-black/20 inline-block px-3 py-1 rounded-full w-fit">Talent Flotte</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- SLIDE 5: PROCESS (Teal) -->
+        <div class="slide bg-euro-teal" data-theme="dark">
+            <div class="relative z-10 w-full max-w-6xl p-6">
+                <div class="anim-elem text-center mb-16">
+                    <h2 class="text-4xl md:text-6xl font-bold text-white mb-4">Der Kreislauf</h2>
+                    <p class="text-euro-blue font-bold opacity-80 text-xl">Kommunikation ist der Schlüssel.</p>
+                </div>
+                <div class="flex flex-col md:flex-row gap-8 justify-center items-stretch">
+                    <div class="anim-elem flex-1 glass-panel p-8 rounded-3xl border-white/20 hover:bg-white/10 transition">
+                        <i class="fa-solid fa-database text-4xl text-euro-blue mb-6 bg-white/20 w-16 h-16 flex items-center justify-center rounded-2xl"></i>
+                        <h3 class="text-2xl font-bold text-white mb-2">1. Planung</h3>
+                        <p class="text-sm text-blue-50 leading-relaxed">Die BZ kennt das Gesamtbild. Sie entscheidet über Prioritäten und Gleisbelegung.</p>
+                    </div>
+                    <div class="hidden md:flex items-center justify-center text-white/40 text-3xl anim-elem"><i class="fa-solid fa-arrow-right"></i></div>
+                    <div class="anim-elem flex-1 bg-white text-euro-blue p-8 rounded-3xl shadow-2xl transform md:scale-110 z-10 border-4 border-white/20">
+                        <i class="fa-solid fa-walkie-talkie text-5xl text-euro-teal mb-6"></i>
+                        <h3 class="text-3xl font-black mb-2">2. FUNK</h3>
+                        <p class="text-base font-bold leading-relaxed">Präzise Meldungen sparen Zeit & vermeiden Fehler. Das Nadelöhr der Info.</p>
+                    </div>
+                    <div class="hidden md:flex items-center justify-center text-white/40 text-3xl anim-elem"><i class="fa-solid fa-arrow-right"></i></div>
+                    <div class="anim-elem flex-1 glass-panel p-8 rounded-3xl border-white/20 hover:bg-white/10 transition">
+                        <i class="fa-solid fa-train-subway text-4xl text-euro-blue mb-6 bg-white/20 w-16 h-16 flex items-center justify-center rounded-2xl"></i>
+                        <h3 class="text-2xl font-bold text-white mb-2">3. Wir (Tf)</h3>
+                        <p class="text-sm text-blue-50 leading-relaxed">Umsetzung auf der Schiene. Verständnis für Wartezeiten und Zwänge.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- SLIDE 6: OUTRO (Clean) -->
+        <div class="slide bg-gradient-to-t from-euro-blue to-black text-center" data-theme="dark">
+            <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-euro-teal/10 rounded-full blur-[150px] pointer-events-none"></div>
+            <div class="relative z-10 max-w-3xl mx-auto px-6">
+                <h2 class="anim-elem text-6xl md:text-9xl font-black text-white mb-10 tracking-tighter leading-tight">
+                    Vielen Dank.
+                </h2>
+                <div class="anim-elem w-32 h-1.5 bg-white/10 mx-auto mb-12 rounded-full"></div>
+                <p class="anim-elem text-xl md:text-3xl text-blue-100/90 font-light mb-16 leading-relaxed">
+                    Der Besuch in der BZ hat gezeigt: <br>
+                    Eisenbahn ist Teamsport.
+                    Technik hilft, aber am Ende entscheidet der Mensch.
+                </p>
+                <div class="anim-elem inline-block px-8 py-4 rounded-full bg-white/5 backdrop-blur border border-white/10 hover:bg-white/10 transition cursor-default">
+                    <span class="text-xs font-bold tracking-[0.25em] text-euro-teal uppercase">Damon Connor Wohlgemuth-Link</span>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- LOGIC -->
+    <script>
+        const slides = document.querySelectorAll('.slide');
+        const logo = document.getElementById('euro-logo');
+        const badge = document.getElementById('badge');
+        const footerText = document.getElementById('footer-text');
+        const prevBtn = document.getElementById('prevBtn');
+        const fsBtn = document.getElementById('fs-btn');
+        
+        let currentSlide = 0;
+        let isAnimating = false;
+        let touchStart = 0;
+        let touchEnd = 0;
+
+        // MODAL DATA
+        const networks = {
+            HWN: { title: "Hellweg-Netz", badge: "Rückgrat Ost", lines: "RB 50 · RB 59 · RB 69 · RB 89", desc: "Verbindet Dortmund mit Soest, Paderborn und Münster. Eine der wichtigsten und meistbefahrenen Achsen der Eurobahn. Einsatz von FLIRT Fahrzeugen.", icon: '<i class="fa-solid fa-city"></i>' },
+            TWN: { title: "Teutoburger Wald", badge: "International", lines: "RB 61 · RB 65 · RB 66", desc: "Verläuft von Bielefeld/Münster bis nach Hengelo (NL). Besonderheit: Mehrsystem-Fahrzeuge für den grenzüberschreitenden Verkehr.", icon: '<i class="fa-solid fa-tree"></i>' },
+            MRL: { title: "Maas-Rhein-Lippe", badge: "Pendlerachse", lines: "RE 3 · RE 13", desc: "Verbindet Hamm, Dortmund, Düsseldorf mit Venlo (NL). Hohes Fahrgastaufkommen. FLIRT Fahrzeuge im Einsatz.", icon: '<i class="fa-solid fa-water"></i>' },
+            OWL: { title: "Ostwestfalen", badge: "Dieselnetz", lines: "RB 71 · RB 73 · RE 82", desc: "Nicht-elektrifizierte Strecken rund um Bielefeld, Rahden und Lemgo. Einsatz von Talent-Dieseltriebwagen.", icon: '<i class="fa-solid fa-gas-pump"></i>' }
+        };
+
+        function changeSlide(dir) {
+            if (isAnimating) return;
+            
+            const nextIndex = currentSlide + dir;
+            if (nextIndex < 0 || nextIndex >= slides.length) return;
+
+            isAnimating = true;
+            const current = slides[currentSlide];
+            const next = slides[nextIndex];
+            
+            updateUI(nextIndex);
+
+            // Animation Timeline
+            const tl = gsap.timeline({ onComplete: () => { current.classList.remove('active'); isAnimating = false; } });
+            
+            // Fade Out
+            tl.to(current, { opacity: 0, scale: 0.95, duration: 0.6, ease: "power2.inOut" });
+            
+            // Fade In
+            next.classList.add('active');
+            const innerElems = next.querySelectorAll('.anim-elem');
+            
+            // Prepare elements (hidden)
+            gsap.set(next, { opacity: 0, scale: 1.05 });
+            gsap.set(innerElems, { y: 40, opacity: 0 });
+
+            // Slide In
+            tl.to(next, { opacity: 1, scale: 1, duration: 0.6, ease: "power2.inOut" }, "-=0.4");
+            
+            // Stagger Elements
+            tl.to(innerElems, { y: 0, opacity: 1, duration: 0.8, stagger: 0.15, ease: "power3.out" }, "-=0.3");
+
+            currentSlide = nextIndex;
+        }
+
+        function updateUI(index) {
+            const theme = slides[index].getAttribute('data-theme');
+            const isLight = theme === 'light';
+            
+            if (isLight) {
+                // LIGHT THEME SETTINGS
+                document.body.classList.add('light-theme');
+                logo.classList.remove('white-logo');
+                logo.classList.add('original-logo');
+                
+                badge.className = "px-4 py-1.5 rounded-full bg-white/80 backdrop-blur text-xs font-bold tracking-widest uppercase border border-slate-300 text-[#030A8C] transition-all duration-500 shadow-sm";
+                footerText.classList.remove('text-white/40'); footerText.classList.add('text-slate-400');
+                prevBtn.style.borderColor = 'rgba(0,0,0,0.1)'; prevBtn.style.color = '#030A8C';
+            } else {
+                // DARK THEME SETTINGS
+                document.body.classList.remove('light-theme');
+                logo.classList.add('white-logo');
+                logo.classList.remove('original-logo');
+                
+                badge.className = "px-4 py-1.5 rounded-full bg-white/10 backdrop-blur text-xs font-bold tracking-widest uppercase border border-white/20 text-white transition-all duration-500";
+                footerText.classList.add('text-white/40'); footerText.classList.remove('text-slate-400');
+                prevBtn.style.borderColor = 'rgba(255,255,255,0.2)'; prevBtn.style.color = 'white';
+            }
+        }
+
+        function toggleFullScreen() {
+            if (!document.fullscreenElement) {
+                document.documentElement.requestFullscreen();
+                fsBtn.innerHTML = '<i class="fa-solid fa-compress"></i>';
+            } else {
+                if (document.exitFullscreen) {
+                    document.exitFullscreen();
+                    fsBtn.innerHTML = '<i class="fa-solid fa-expand"></i>';
+                }
+            }
+        }
+
+        function openModal(id) {
+            const d = networks[id];
+            document.getElementById('modal-title').innerText = d.title;
+            document.getElementById('modal-badge').innerText = d.badge;
+            document.getElementById('modal-lines').innerText = d.lines;
+            document.getElementById('modal-desc').innerText = d.desc;
+            document.getElementById('modal-icon').innerHTML = d.icon;
+            document.getElementById('modal-overlay').classList.add('open');
+        }
+        function closeModal() { document.getElementById('modal-overlay').classList.remove('open'); }
+
+        document.addEventListener('keydown', (e) => {
+            if(e.key === 'ArrowRight' || e.key === 'ArrowDown') changeSlide(1);
+            if(e.key === 'ArrowLeft' || e.key === 'ArrowUp') changeSlide(-1);
+            if(e.key === 'Escape') closeModal();
+        });
+
+        document.addEventListener('touchstart', e => touchStart = e.changedTouches[0].screenX);
+        document.addEventListener('touchend', e => {
+            touchEnd = e.changedTouches[0].screenX;
+            if (touchStart - touchEnd > 50) changeSlide(1);
+            if (touchEnd - touchStart > 50) changeSlide(-1);
+        });
+
+        // INIT
+        window.onload = () => {
+            const firstSlide = slides[0];
+            firstSlide.classList.add('active');
+            gsap.set(firstSlide, { opacity: 1, visibility: 'visible' });
+            gsap.fromTo(firstSlide.querySelectorAll('.anim-elem'), 
+                { y: 40, opacity: 0 }, 
+                { y: 0, opacity: 1, duration: 1, stagger: 0.2, ease: "power3.out", delay: 0.2 }
+            );
+            updateUI(0);
+        };
+    </script>
+</body>
+</html>
+
