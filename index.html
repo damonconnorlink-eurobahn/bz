@@ -51,10 +51,10 @@
         }
         .slide.active { opacity: 1; visibility: visible; z-index: 10; }
 
-        /* ANIMATION HELPERS (Startzustand) */
-        .anim-elem { transform: translateY(30px); opacity: 0; }
+        /* ANIMATION PRESETS (Start values) */
+        .anim-elem { transform: translateY(60px); opacity: 0; will-change: transform, opacity; }
 
-        /* LOGO FILTERS */
+        /* LOGO FILTERS (CSS State) */
         .logo-img { transition: filter 0.5s ease; }
         .logo-img.white-logo { filter: brightness(0) invert(1); } 
         .logo-img.original-logo { filter: none; }
@@ -67,7 +67,7 @@
             cursor: pointer; border: 1px solid rgba(255,255,255,0.2); transition: all 0.3s ease;
         }
         .nav-btn:hover { background: #41A6A6; border-color: #41A6A6; transform: scale(1.1); }
-        
+
         /* FULLSCREEN BUTTON */
         #fs-btn {
             width: 50px; height: 50px; border-radius: 50%;
@@ -79,13 +79,13 @@
         #fs-btn:hover { background: rgba(255,255,255,0.2); transform: scale(1.1); }
         .light-theme #fs-btn { color: #030A8C; border-color: rgba(3,10,140,0.2); background: rgba(255,255,255,0.5); }
 
-        /* GLASS & CARDS */
+        /* CARDS & GLASS */
         .glass-panel {
             background: rgba(255, 255, 255, 0.03); backdrop-filter: blur(15px);
             border: 1px solid rgba(255, 255, 255, 0.1);
         }
-        .net-card { cursor: pointer; transition: transform 0.3s ease; }
-        .net-card:hover { transform: translateY(-10px); }
+        .net-card { cursor: pointer; transition: transform 0.4s cubic-bezier(0.2, 0.8, 0.2, 1); }
+        .net-card:hover { transform: translateY(-12px); box-shadow: 0 20px 40px -10px rgba(0,0,0,0.2); }
 
         /* GLITCH EFFECT */
         .glitch { position: relative; color: white; mix-blend-mode: lighten; }
@@ -105,102 +105,130 @@
 
         /* MODAL */
         #modal-overlay {
-            position: fixed; inset: 0; background: rgba(0,0,0,0.85); backdrop-filter: blur(8px);
+            position: fixed; inset: 0; background: rgba(0,0,0,0.85); backdrop-filter: blur(12px);
             z-index: 100; opacity: 0; visibility: hidden;
             display: flex; justify-content: center; align-items: center; transition: all 0.4s;
         }
         #modal-overlay.open { opacity: 1; visibility: visible; }
-        #modal-content { transform: scale(0.9); transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1); }
-        #modal-overlay.open #modal-content { transform: scale(1); }
+        #modal-content { transform: scale(0.9) translateY(20px); transition: all 0.5s cubic-bezier(0.16, 1, 0.3, 1); }
+        #modal-overlay.open #modal-content { transform: scale(1) translateY(0); }
     </style>
 </head>
 <body>
 
-    <!-- MODAL -->
+    <!-- MODAL POPUP -->
     <div id="modal-overlay" onclick="closeModal()">
-        <div id="modal-content" class="bg-[#15151a] border border-euro-teal/30 p-8 rounded-3xl max-w-xl w-full mx-6 relative shadow-2xl" onclick="event.stopPropagation()">
-            <button onclick="closeModal()" class="absolute top-6 right-6 text-white/40 hover:text-white"><i class="fa-solid fa-xmark text-2xl"></i></button>
-            <div class="flex items-center gap-5 mb-8">
-                <div id="modal-icon" class="w-16 h-16 bg-euro-teal rounded-2xl flex items-center justify-center text-white text-2xl shadow-lg"></div>
+        <div id="modal-content" class="bg-[#1a1a24] border border-euro-teal/30 p-8 md:p-10 rounded-3xl max-w-2xl w-full mx-6 relative shadow-2xl" onclick="event.stopPropagation()">
+            <button onclick="closeModal()" class="absolute top-6 right-6 text-white/40 hover:text-white transition"><i class="fa-solid fa-xmark text-2xl"></i></button>
+            
+            <div class="flex items-center gap-6 mb-8">
+                <div id="modal-icon" class="w-20 h-20 bg-euro-teal rounded-2xl flex items-center justify-center text-white text-3xl shadow-lg"></div>
                 <div>
-                    <h3 id="modal-title" class="text-3xl font-bold text-white"></h3>
-                    <span id="modal-badge" class="bg-euro-blue text-white px-3 py-1 rounded-md text-xs font-bold uppercase mt-1 inline-block"></span>
+                    <h3 id="modal-title" class="text-3xl md:text-4xl font-bold text-white leading-none"></h3>
+                    <span id="modal-badge" class="bg-euro-blue text-white px-3 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider mt-2 inline-block"></span>
                 </div>
             </div>
+            
             <div class="space-y-6 text-gray-300">
-                <div><p class="text-euro-teal text-xs font-bold uppercase mb-2">Linien</p><p id="modal-lines" class="text-xl text-white font-light"></p></div>
-                <div><p class="text-euro-teal text-xs font-bold uppercase mb-2">Details</p><p id="modal-desc" class="leading-relaxed text-white/80"></p></div>
+                <div class="p-4 rounded-xl bg-white/5 border border-white/5">
+                    <div class="flex items-center gap-2 text-euro-teal text-xs font-bold uppercase tracking-widest mb-2">
+                        <i class="fa-solid fa-user-headset"></i> Unser Eindruck
+                    </div>
+                    <p class="text-white leading-relaxed">Hier saßen wir beim Disponenten. Er allein koordiniert alle Zugbewegungen in diesem Sektor.</p>
+                </div>
+                <div>
+                    <p class="text-euro-teal text-xs font-bold uppercase tracking-widest mb-1">Strecken & Linien</p>
+                    <p id="modal-lines" class="text-xl text-white font-light"></p>
+                </div>
+                <div>
+                    <p class="text-euro-teal text-xs font-bold uppercase tracking-widest mb-1">Details</p>
+                    <p id="modal-desc" class="leading-relaxed text-white/70 text-sm"></p>
+                </div>
             </div>
         </div>
     </div>
 
     <!-- HEADER -->
     <header class="fixed top-0 left-0 w-full p-6 md:p-8 z-50 flex justify-between items-center pointer-events-none">
-        <img id="euro-logo" src="https://www.eurobahn.de/fileadmin/bilder/logos/logo-eurobahn.svg" class="h-8 md:h-10 w-auto logo-img white-logo">
+        <!-- Logo als IMG für stabile Farbfilter -->
+        <img id="euro-logo" src="https://www.eurobahn.de/fileadmin/bilder/logos/logo-eurobahn.svg" class="h-8 md:h-10 w-auto logo-img white-logo drop-shadow-md">
+        
         <div id="badge" class="px-4 py-1.5 rounded-full bg-white/10 backdrop-blur text-[10px] md:text-xs font-bold tracking-widest uppercase border border-white/20 text-white transition-all duration-500 shadow-sm">
             Tagesbericht BZ
         </div>
     </header>
 
-    <!-- FOOTER CONTROLS -->
+    <!-- FOOTER -->
     <footer class="fixed bottom-0 left-0 w-full p-8 z-50 flex justify-between items-end pointer-events-none">
-        <div id="footer-text" class="text-[10px] font-bold tracking-[0.2em] text-white/40 uppercase pointer-events-auto transition-colors duration-500">
+        <div id="footer-text" class="text-[10px] font-bold tracking-[0.2em] text-white/40 uppercase pointer-events-auto transition-colors duration-500 hidden md:block">
             © Damon Connor Wohlgemuth-Link
         </div>
-        <div class="flex gap-4 pointer-events-auto">
+        <div class="flex gap-4 pointer-events-auto ml-auto md:ml-0">
             <button id="fs-btn" onclick="toggleFullScreen()" title="Vollbild"><i class="fa-solid fa-expand"></i></button>
+            <div class="w-px h-10 bg-white/20 mx-2 hidden md:block"></div>
             <button id="prevBtn" class="nav-btn" onclick="changeSlide(-1)"><i class="fa-solid fa-chevron-left"></i></button>
             <button id="nextBtn" class="nav-btn" style="background: #41A6A6; border-color: #41A6A6; color: white;" onclick="changeSlide(1)"><i class="fa-solid fa-chevron-right"></i></button>
         </div>
     </footer>
 
-    <!-- SLIDES -->
+    <!-- SLIDE CONTAINER -->
     <div id="slider">
 
         <!-- SLIDE 1: HERO -->
         <div class="slide active bg-gradient-to-br from-euro-blue to-black" data-theme="dark">
             <div class="absolute top-1/4 left-1/4 w-[50vw] h-[50vw] bg-euro-teal rounded-full blur-[150px] opacity-20 animate-pulse pointer-events-none"></div>
+            
             <div class="relative z-10 w-full max-w-[90%] mx-auto text-center">
                 <div class="anim-elem">
-                    <span class="inline-block px-4 py-1 mb-8 rounded-full border border-euro-teal text-euro-teal text-xs font-bold tracking-[0.3em] bg-euro-teal/5">
-                        17.11.2025 • DUISBURG
+                    <span class="inline-block px-4 py-1 mb-8 rounded-full border border-euro-teal text-euro-teal text-xs font-bold tracking-[0.3em] bg-euro-teal/5 uppercase">
+                        EiB Azubi • 17.11.2025
                     </span>
                 </div>
-                <h1 class="anim-elem text-6xl md:text-8xl lg:text-[9rem] font-black text-white mb-8 tracking-tighter leading-[0.9]">
+                <h1 class="anim-elem text-6xl md:text-8xl lg:text-[9rem] font-black text-white mb-8 tracking-tighter leading-[0.85]">
                     BETRIEBS<wbr><span class="text-transparent bg-clip-text bg-gradient-to-r from-euro-teal to-white">ZENTRALE</span>
                 </h1>
-                <div class="anim-elem w-32 h-1.5 bg-gradient-to-r from-euro-blue to-euro-teal mx-auto mb-12 rounded-full"></div>
-                <p class="anim-elem text-xl md:text-3xl text-blue-100/90 font-light max-w-5xl mx-auto leading-relaxed">
-                    Einblick in das operative Herz der Eurobahn. <br class="hidden md:block">
-                    Steuerung, Disposition und Kommunikation.
+                <div class="anim-elem w-32 h-1.5 bg-gradient-to-r from-euro-blue to-euro-teal mx-auto mb-12 rounded-full shadow-[0_0_20px_rgba(65,166,166,0.5)]"></div>
+                <p class="anim-elem text-xl md:text-3xl text-blue-100/90 font-light max-w-4xl mx-auto leading-relaxed">
+                    Einblick in das operative Herz der Eurobahn in Duisburg. <br class="hidden md:block">
+                    Planung, Disposition und Krisenmanagement.
                 </p>
-                <div class="anim-elem mt-16 text-white/50 text-xs uppercase tracking-[0.2em] animate-bounce cursor-pointer" onclick="changeSlide(1)">
-                    Starten <i class="fa-solid fa-arrow-right ml-2"></i>
+                <div class="anim-elem mt-20 text-white/50 text-xs uppercase tracking-[0.25em] animate-bounce cursor-pointer hover:text-euro-teal transition" onclick="changeSlide(1)">
+                    Starten <i class="fa-solid fa-arrow-down ml-2"></i>
                 </div>
             </div>
         </div>
 
         <!-- SLIDE 2: START (Light) -->
-        <div class="slide bg-white text-slate-900" data-theme="light">
-            <div class="absolute right-0 top-0 w-1/3 h-full bg-slate-50 transform skew-x-12 origin-top pointer-events-none"></div>
-            <div class="relative z-10 w-full max-w-7xl grid md:grid-cols-2 gap-16 items-center p-6">
-                <div class="anim-elem w-full aspect-[4/3] rounded-[2.5rem] bg-gradient-to-tr from-euro-blue to-euro-teal shadow-2xl flex items-center justify-center relative overflow-hidden group">
+        <div class="slide bg-[#F8FAFC] text-slate-900" data-theme="light">
+            <div class="absolute right-0 top-0 w-2/5 h-full bg-white transform -skew-x-12 origin-top pointer-events-none shadow-2xl"></div>
+            
+            <div class="relative z-10 w-full max-w-7xl grid md:grid-cols-2 gap-20 items-center p-6">
+                <div class="anim-elem w-full aspect-[4/3] rounded-[2.5rem] bg-gradient-to-tr from-euro-blue to-euro-teal shadow-2xl flex items-center justify-center relative overflow-hidden group transform hover:scale-[1.02] transition duration-500">
                     <div class="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-20"></div>
-                    <i class="fa-solid fa-location-dot text-9xl text-white drop-shadow-lg transition-transform duration-700 group-hover:scale-110"></i>
-                    <div class="absolute bottom-8 left-8 bg-white px-6 py-3 rounded-2xl shadow-lg flex items-center gap-3">
-                        <i class="fa-regular fa-clock text-euro-blue"></i><span class="font-bold text-euro-blue">09:00 Start</span>
+                    <div class="w-32 h-32 bg-white/20 rounded-full flex items-center justify-center backdrop-blur-md shadow-inner">
+                        <i class="fa-solid fa-location-dot text-6xl text-white drop-shadow-lg"></i>
+                    </div>
+                    <div class="absolute bottom-8 left-8 bg-white/90 backdrop-blur px-6 py-3 rounded-2xl shadow-lg flex items-center gap-3">
+                        <div class="w-2 h-2 rounded-full bg-green-500 animate-pulse"></div>
+                        <span class="font-bold text-euro-blue text-sm tracking-wide">09:00 UHR START</span>
                     </div>
                 </div>
+                
                 <div class="anim-elem">
-                    <h2 class="text-5xl md:text-7xl font-bold text-euro-blue mb-8">Der Auftakt</h2>
-                    <p class="text-lg md:text-xl text-slate-600 mb-10 leading-relaxed">
-                        Wir starteten direkt im <strong class="text-euro-teal">Live-Betrieb</strong>.
-                        Sofortige Zuteilung zu den Disponenten. Wir saßen direkt am Platz ("Schulterblick") und erlebten den operativen Druck hautnah.
+                    <h2 class="text-6xl md:text-8xl font-bold text-euro-blue mb-10 tracking-tight">Der<br>Auftakt</h2>
+                    <p class="text-xl text-slate-600 mb-12 leading-relaxed border-l-4 border-euro-teal pl-6">
+                        Kein Schulungsraum. Wir starteten direkt im <strong class="text-euro-teal">Live-Betrieb</strong>.
+                        Sofortige Zuteilung zu den Disponenten für einen direkten "Schulterblick".
                     </p>
-                    <div class="flex flex-col gap-4">
-                        <div class="p-5 rounded-2xl border border-slate-200 bg-slate-50 flex items-center gap-5">
-                            <div class="w-12 h-12 rounded-full bg-euro-blue text-white flex items-center justify-center text-xl"><i class="fa-solid fa-eye"></i></div>
-                            <div><h4 class="font-bold text-euro-blue text-lg">Beobachtung</h4><p class="text-sm text-slate-500">Entscheidungen in Echtzeit.</p></div>
+                    
+                    <div class="grid gap-4">
+                        <div class="p-6 rounded-2xl bg-white border border-slate-100 flex items-center gap-6 shadow-sm hover:shadow-md transition-shadow">
+                            <div class="w-14 h-14 rounded-full bg-euro-blue text-white flex items-center justify-center text-2xl"><i class="fa-solid fa-user-group"></i></div>
+                            <div><h4 class="font-bold text-euro-blue text-lg">1:1 Betreuung</h4><p class="text-sm text-slate-500">Jeder Azubi einem Disponenten zugeteilt.</p></div>
+                        </div>
+                        <div class="p-6 rounded-2xl bg-white border border-slate-100 flex items-center gap-6 shadow-sm hover:shadow-md transition-shadow">
+                            <div class="w-14 h-14 rounded-full bg-euro-teal text-white flex items-center justify-center text-2xl"><i class="fa-solid fa-ear-listen"></i></div>
+                            <div><h4 class="font-bold text-euro-blue text-lg">Live dabei</h4><p class="text-sm text-slate-500">Funkverkehr & Entscheidungen hautnah.</p></div>
                         </div>
                     </div>
                 </div>
@@ -210,6 +238,7 @@
         <!-- SLIDE 3: HASTUS (Dark/Glitch) -->
         <div class="slide bg-[#050505]" data-theme="dark">
             <div class="absolute inset-0 opacity-20 bg-[radial-gradient(circle,rgba(239,68,68,0.2)_1px,transparent_1px)] [background-size:30px_30px]"></div>
+            
             <div class="relative z-10 w-full max-w-7xl grid md:grid-cols-2 gap-16 items-center p-6">
                 <div class="anim-elem">
                     <div class="inline-flex items-center gap-3 px-4 py-2 border border-red-600/50 bg-red-900/20 text-red-500 text-sm font-bold mb-8 rounded-lg animate-pulse">
@@ -255,32 +284,48 @@
             <div class="relative z-10 w-full max-w-7xl h-full flex flex-col justify-center p-6">
                 <div class="anim-elem text-center mb-12">
                     <h2 class="text-4xl md:text-6xl font-bold text-euro-blue mb-2">Die Netzstruktur</h2>
-                    <p class="text-slate-500 text-xl">Klicke auf ein Netz für Details.</p>
+                    <p class="text-slate-500 text-xl">Klicke auf einen Bereich für Details.</p>
                 </div>
+
                 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 h-full md:h-auto overflow-y-auto pb-24 md:pb-0 px-2">
-                    <div onclick="openModal('HWN')" class="net-card anim-elem h-72 bg-euro-blue rounded-3xl p-8 text-white relative overflow-hidden flex flex-col justify-end shadow-xl group">
-                        <div class="absolute top-4 right-4 w-10 h-10 rounded-full bg-white/20 flex items-center justify-center"><i class="fa-solid fa-plus"></i></div>
-                        <span class="absolute top-4 left-6 text-6xl font-black opacity-10">HWN</span>
-                        <h3 class="text-2xl font-bold mb-1">Hellweg</h3>
-                        <div class="mt-4 text-[10px] uppercase bg-black/20 inline-block px-3 py-1 rounded-full w-fit">Rückgrat Ost</div>
+                    <!-- HWN -->
+                    <div onclick="openModal('HWN')" class="net-card anim-elem h-80 bg-euro-blue rounded-3xl p-8 text-white relative overflow-hidden flex flex-col justify-end shadow-xl group">
+                        <div class="absolute top-0 right-0 w-40 h-40 bg-white/10 rounded-bl-full transition-transform group-hover:scale-110"></div>
+                        <div class="absolute top-6 right-6 w-12 h-12 bg-white/20 rounded-full flex items-center justify-center backdrop-blur"><i class="fa-solid fa-plus"></i></div>
+                        <span class="absolute top-6 left-8 text-7xl font-black opacity-10">O</span>
+                        <h3 class="text-3xl font-bold mb-2">Ost</h3>
+                        <p class="text-white/70 text-lg">Hellweg-Netz</p>
+                        <div class="mt-6 text-[10px] uppercase tracking-widest bg-black/20 inline-block px-4 py-2 rounded-full w-fit">Dispo 1</div>
                     </div>
-                    <div onclick="openModal('TWN')" class="net-card anim-elem h-72 bg-euro-teal rounded-3xl p-8 text-white relative overflow-hidden flex flex-col justify-end shadow-xl group">
-                        <div class="absolute top-4 right-4 w-10 h-10 rounded-full bg-white/20 flex items-center justify-center"><i class="fa-solid fa-plus"></i></div>
-                        <span class="absolute top-4 left-6 text-6xl font-black opacity-10">TWN</span>
-                        <h3 class="text-2xl font-bold mb-1">Teuto</h3>
-                        <div class="mt-4 text-[10px] uppercase bg-black/20 inline-block px-3 py-1 rounded-full w-fit">International</div>
+                    
+                    <!-- TWN -->
+                    <div onclick="openModal('TWN')" class="net-card anim-elem h-80 bg-euro-teal rounded-3xl p-8 text-white relative overflow-hidden flex flex-col justify-end shadow-xl group" style="transition-delay: 0.1s">
+                        <div class="absolute top-0 right-0 w-40 h-40 bg-white/10 rounded-bl-full transition-transform group-hover:scale-110"></div>
+                        <div class="absolute top-6 right-6 w-12 h-12 bg-white/20 rounded-full flex items-center justify-center backdrop-blur"><i class="fa-solid fa-plus"></i></div>
+                        <span class="absolute top-6 left-8 text-7xl font-black opacity-10">N</span>
+                        <h3 class="text-3xl font-bold mb-2">Nord</h3>
+                        <p class="text-white/70 text-lg">Teutoburger Wald</p>
+                        <div class="mt-6 text-[10px] uppercase tracking-widest bg-black/20 inline-block px-4 py-2 rounded-full w-fit">Dispo 2</div>
                     </div>
-                    <div onclick="openModal('MRL')" class="net-card anim-elem h-72 bg-[#30348C] rounded-3xl p-8 text-white relative overflow-hidden flex flex-col justify-end shadow-xl group">
-                        <div class="absolute top-4 right-4 w-10 h-10 rounded-full bg-white/20 flex items-center justify-center"><i class="fa-solid fa-plus"></i></div>
-                        <span class="absolute top-4 left-6 text-6xl font-black opacity-10">MRL</span>
-                        <h3 class="text-2xl font-bold mb-1">Maas-Rhein</h3>
-                        <div class="mt-4 text-[10px] uppercase bg-black/20 inline-block px-3 py-1 rounded-full w-fit">Pendlerachse</div>
+
+                    <!-- MRL -->
+                    <div onclick="openModal('MRL')" class="net-card anim-elem h-80 bg-[#30348C] rounded-3xl p-8 text-white relative overflow-hidden flex flex-col justify-end shadow-xl group" style="transition-delay: 0.2s">
+                        <div class="absolute top-0 right-0 w-40 h-40 bg-white/10 rounded-bl-full transition-transform group-hover:scale-110"></div>
+                        <div class="absolute top-6 right-6 w-12 h-12 bg-white/20 rounded-full flex items-center justify-center backdrop-blur"><i class="fa-solid fa-plus"></i></div>
+                        <span class="absolute top-6 left-8 text-7xl font-black opacity-10">W</span>
+                        <h3 class="text-3xl font-bold mb-2">West</h3>
+                        <p class="text-white/70 text-lg">Maas-Rhein</p>
+                        <div class="mt-6 text-[10px] uppercase tracking-widest bg-black/20 inline-block px-4 py-2 rounded-full w-fit">Dispo 3</div>
                     </div>
-                    <div onclick="openModal('OWL')" class="net-card anim-elem h-72 bg-[#1F2937] rounded-3xl p-8 text-white relative overflow-hidden flex flex-col justify-end shadow-xl group">
-                        <div class="absolute top-4 right-4 w-10 h-10 rounded-full bg-white/20 flex items-center justify-center"><i class="fa-solid fa-plus"></i></div>
-                        <span class="absolute top-4 left-6 text-6xl font-black opacity-10">OWL</span>
-                        <h3 class="text-2xl font-bold mb-1">Ostwestf.</h3>
-                        <div class="mt-4 text-[10px] uppercase bg-black/20 inline-block px-3 py-1 rounded-full w-fit">Talent Flotte</div>
+
+                    <!-- OWL -->
+                    <div onclick="openModal('OWL')" class="net-card anim-elem h-80 bg-[#1F2937] rounded-3xl p-8 text-white relative overflow-hidden flex flex-col justify-end shadow-xl group" style="transition-delay: 0.3s">
+                        <div class="absolute top-0 right-0 w-40 h-40 bg-white/10 rounded-bl-full transition-transform group-hover:scale-110"></div>
+                        <div class="absolute top-6 right-6 w-12 h-12 bg-white/20 rounded-full flex items-center justify-center backdrop-blur"><i class="fa-solid fa-plus"></i></div>
+                        <span class="absolute top-6 left-8 text-7xl font-black opacity-10">D</span>
+                        <h3 class="text-3xl font-bold mb-2">OWL</h3>
+                        <p class="text-white/70 text-lg">Dieselnetz</p>
+                        <div class="mt-6 text-[10px] uppercase tracking-widest bg-black/20 inline-block px-4 py-2 rounded-full w-fit">Dispo 4</div>
                     </div>
                 </div>
             </div>
@@ -288,28 +333,33 @@
 
         <!-- SLIDE 5: PROCESS (Teal) -->
         <div class="slide bg-euro-teal" data-theme="dark">
-            <div class="relative z-10 w-full max-w-6xl p-6">
-                <div class="anim-elem text-center mb-16">
-                    <h2 class="text-4xl md:text-6xl font-bold text-white mb-4">Der Kreislauf</h2>
-                    <p class="text-euro-blue font-bold opacity-80 text-xl">Kommunikation ist der Schlüssel.</p>
+            <div class="absolute inset-0 opacity-10 bg-[radial-gradient(white_1px,transparent_1px)] [background-size:30px_30px]"></div>
+            <div class="relative z-10 w-full max-w-7xl p-6">
+                <div class="anim-elem text-center mb-20">
+                    <h2 class="text-5xl md:text-7xl font-bold text-white mb-4">Das Fazit</h2>
+                    <p class="text-euro-blue font-bold opacity-80 text-xl tracking-wide">Kommunikation ist der Schlüssel zum Betrieb.</p>
                 </div>
-                <div class="flex flex-col md:flex-row gap-8 justify-center items-stretch">
-                    <div class="anim-elem flex-1 glass-panel p-8 rounded-3xl border-white/20 hover:bg-white/10 transition">
-                        <i class="fa-solid fa-database text-4xl text-euro-blue mb-6 bg-white/20 w-16 h-16 flex items-center justify-center rounded-2xl"></i>
-                        <h3 class="text-2xl font-bold text-white mb-2">1. Planung</h3>
-                        <p class="text-sm text-blue-50 leading-relaxed">Die BZ kennt das Gesamtbild. Sie entscheidet über Prioritäten und Gleisbelegung.</p>
+
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-8 items-center">
+                    <!-- Card 1 -->
+                    <div class="anim-elem glass-panel p-10 rounded-[2rem] border-white/20 hover:bg-white/10 transition duration-500 h-full flex flex-col">
+                        <div class="w-16 h-16 bg-white/20 rounded-2xl flex items-center justify-center text-euro-blue text-3xl mb-8"><i class="fa-solid fa-database"></i></div>
+                        <h3 class="text-2xl font-bold text-white mb-4">1. Planung</h3>
+                        <p class="text-blue-50 leading-relaxed flex-grow">Die BZ hat das "Big Picture". Sie entscheidet über Prioritäten, Gleise und Überholungen, die wir draußen sehen.</p>
                     </div>
-                    <div class="hidden md:flex items-center justify-center text-white/40 text-3xl anim-elem"><i class="fa-solid fa-arrow-right"></i></div>
-                    <div class="anim-elem flex-1 bg-white text-euro-blue p-8 rounded-3xl shadow-2xl transform md:scale-110 z-10 border-4 border-white/20">
-                        <i class="fa-solid fa-walkie-talkie text-5xl text-euro-teal mb-6"></i>
-                        <h3 class="text-3xl font-black mb-2">2. FUNK</h3>
-                        <p class="text-base font-bold leading-relaxed">Präzise Meldungen sparen Zeit & vermeiden Fehler. Das Nadelöhr der Info.</p>
+
+                    <!-- Card 2 (Main) -->
+                    <div class="anim-elem bg-white text-euro-blue p-10 rounded-[2rem] shadow-2xl transform md:scale-110 z-10 border-8 border-euro-teal/20 h-full flex flex-col">
+                        <div class="w-16 h-16 bg-euro-teal/10 rounded-2xl flex items-center justify-center text-euro-teal text-3xl mb-8"><i class="fa-solid fa-tower-broadcast"></i></div>
+                        <h3 class="text-3xl font-black mb-4">2. FUNK</h3>
+                        <p class="text-lg font-bold leading-relaxed flex-grow">Präzise Meldungen sparen Zeit. Der Disponent ist unser wichtigster Partner im Störungsfall.</p>
                     </div>
-                    <div class="hidden md:flex items-center justify-center text-white/40 text-3xl anim-elem"><i class="fa-solid fa-arrow-right"></i></div>
-                    <div class="anim-elem flex-1 glass-panel p-8 rounded-3xl border-white/20 hover:bg-white/10 transition">
-                        <i class="fa-solid fa-train-subway text-4xl text-euro-blue mb-6 bg-white/20 w-16 h-16 flex items-center justify-center rounded-2xl"></i>
-                        <h3 class="text-2xl font-bold text-white mb-2">3. Wir (Tf)</h3>
-                        <p class="text-sm text-blue-50 leading-relaxed">Umsetzung auf der Schiene. Verständnis für Wartezeiten und Zwänge.</p>
+
+                    <!-- Card 3 -->
+                    <div class="anim-elem glass-panel p-10 rounded-[2rem] border-white/20 hover:bg-white/10 transition duration-500 h-full flex flex-col">
+                        <div class="w-16 h-16 bg-white/20 rounded-2xl flex items-center justify-center text-euro-blue text-3xl mb-8"><i class="fa-solid fa-train-subway"></i></div>
+                        <h3 class="text-2xl font-bold text-white mb-4">3. Wir (Tf)</h3>
+                        <p class="text-blue-50 leading-relaxed flex-grow">Wir setzen um. Das Verständnis für die Zwänge der BZ hilft uns, Wartezeiten am Signal besser zu akzeptieren.</p>
                     </div>
                 </div>
             </div>
@@ -317,32 +367,33 @@
 
         <!-- SLIDE 6: OUTRO (Clean) -->
         <div class="slide bg-gradient-to-t from-euro-blue to-black text-center" data-theme="dark">
-            <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-euro-teal/10 rounded-full blur-[150px] pointer-events-none"></div>
-            <div class="relative z-10 max-w-3xl mx-auto px-6">
-                <h2 class="anim-elem text-6xl md:text-9xl font-black text-white mb-10 tracking-tighter leading-tight">
+            <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-euro-teal/5 rounded-full blur-[150px] pointer-events-none"></div>
+            
+            <div class="relative z-10 max-w-4xl mx-auto px-6">
+                <h2 class="anim-elem text-7xl md:text-[8rem] font-black text-white mb-12 tracking-tighter leading-tight">
                     Vielen Dank.
                 </h2>
-                <div class="anim-elem w-32 h-1.5 bg-white/10 mx-auto mb-12 rounded-full"></div>
-                <p class="anim-elem text-xl md:text-3xl text-blue-100/90 font-light mb-16 leading-relaxed">
-                    Der Besuch in der BZ hat gezeigt: <br>
-                    Eisenbahn ist Teamsport.
-                    Technik hilft, aber am Ende entscheidet der Mensch.
+                <div class="anim-elem w-40 h-1 bg-white/10 mx-auto mb-16 rounded-full"></div>
+                <p class="anim-elem text-2xl md:text-4xl text-blue-100/80 font-light mb-20 leading-relaxed">
+                    Eisenbahn ist Teamsport. <br>
+                    <span class="text-white font-bold">Technik hilft, aber der Mensch entscheidet.</span>
                 </p>
-                <div class="anim-elem inline-block px-8 py-4 rounded-full bg-white/5 backdrop-blur border border-white/10 hover:bg-white/10 transition cursor-default">
-                    <span class="text-xs font-bold tracking-[0.25em] text-euro-teal uppercase">Damon Connor Wohlgemuth-Link</span>
+                <div class="anim-elem inline-block px-10 py-4 rounded-full bg-white/5 backdrop-blur border border-white/10 hover:bg-white/10 transition cursor-default">
+                    <span class="text-sm font-bold tracking-[0.3em] text-euro-teal uppercase">Damon Connor Wohlgemuth-Link</span>
                 </div>
             </div>
         </div>
 
     </div>
 
-    <!-- LOGIC -->
+    <!-- SCRIPT -->
     <script>
         const slides = document.querySelectorAll('.slide');
         const logo = document.getElementById('euro-logo');
         const badge = document.getElementById('badge');
         const footerText = document.getElementById('footer-text');
         const prevBtn = document.getElementById('prevBtn');
+        const nextBtn = document.getElementById('nextBtn');
         const fsBtn = document.getElementById('fs-btn');
         
         let currentSlide = 0;
@@ -352,15 +403,15 @@
 
         // MODAL DATA
         const networks = {
-            HWN: { title: "Hellweg-Netz", badge: "Rückgrat Ost", lines: "RB 50 · RB 59 · RB 69 · RB 89", desc: "Verbindet Dortmund mit Soest, Paderborn und Münster. Eine der wichtigsten und meistbefahrenen Achsen der Eurobahn. Einsatz von FLIRT Fahrzeugen.", icon: '<i class="fa-solid fa-city"></i>' },
-            TWN: { title: "Teutoburger Wald", badge: "International", lines: "RB 61 · RB 65 · RB 66", desc: "Verläuft von Bielefeld/Münster bis nach Hengelo (NL). Besonderheit: Mehrsystem-Fahrzeuge für den grenzüberschreitenden Verkehr.", icon: '<i class="fa-solid fa-tree"></i>' },
-            MRL: { title: "Maas-Rhein-Lippe", badge: "Pendlerachse", lines: "RE 3 · RE 13", desc: "Verbindet Hamm, Dortmund, Düsseldorf mit Venlo (NL). Hohes Fahrgastaufkommen. FLIRT Fahrzeuge im Einsatz.", icon: '<i class="fa-solid fa-water"></i>' },
-            OWL: { title: "Ostwestfalen", badge: "Dieselnetz", lines: "RB 71 · RB 73 · RE 82", desc: "Nicht-elektrifizierte Strecken rund um Bielefeld, Rahden und Lemgo. Einsatz von Talent-Dieseltriebwagen.", icon: '<i class="fa-solid fa-gas-pump"></i>' }
+            HWN: { title: "Hellweg-Netz", badge: "Disponent Ost", lines: "RB 50 · RB 59 · RB 69 · RB 89", desc: "Der Disponent hier steuert die zentrale Ost-West-Achse. Hohe Zugdichte und Mischverkehr erfordern höchste Konzentration.", icon: '<i class="fa-solid fa-city"></i>' },
+            TWN: { title: "Teutoburger Wald", badge: "Disponent Nord", lines: "RB 61 · RB 65 · RB 66", desc: "Verantwortlich für den grenzüberschreitenden Verkehr nach Hengelo. Besonderheit: Koordination mit niederländischen Kollegen.", icon: '<i class="fa-solid fa-tree"></i>' },
+            MRL: { title: "Maas-Rhein-Lippe", badge: "Disponent West", lines: "RE 3 · RE 13", desc: "Steuert die Pendlerströme im Rheinland. Hier ist Pünktlichkeit alles, da Anschlüsse in Düsseldorf und Hamm kritisch sind.", icon: '<i class="fa-solid fa-water"></i>' },
+            OWL: { title: "Ostwestfalen", badge: "Disponent Diesel", lines: "RB 71 · RB 73 · RE 82", desc: "Betreut das Dieselnetz. Spezifische Herausforderungen: Eingleisige Strecken und Kreuzungshalte koordinieren.", icon: '<i class="fa-solid fa-gas-pump"></i>' }
         };
 
+        // ANIMATION
         function changeSlide(dir) {
             if (isAnimating) return;
-            
             const nextIndex = currentSlide + dir;
             if (nextIndex < 0 || nextIndex >= slides.length) return;
 
@@ -370,48 +421,46 @@
             
             updateUI(nextIndex);
 
-            // Animation Timeline
-            const tl = gsap.timeline({ onComplete: () => { current.classList.remove('active'); isAnimating = false; } });
+            // Timeline
+            const tl = gsap.timeline({ onComplete: () => { 
+                current.classList.remove('active'); 
+                isAnimating = false; 
+            }});
             
-            // Fade Out
+            // Out
             tl.to(current, { opacity: 0, scale: 0.95, duration: 0.6, ease: "power2.inOut" });
             
-            // Fade In
+            // In Setup
             next.classList.add('active');
             const innerElems = next.querySelectorAll('.anim-elem');
-            
-            // Prepare elements (hidden)
             gsap.set(next, { opacity: 0, scale: 1.05 });
-            gsap.set(innerElems, { y: 40, opacity: 0 });
+            gsap.set(innerElems, { y: 60, opacity: 0 });
 
-            // Slide In
-            tl.to(next, { opacity: 1, scale: 1, duration: 0.6, ease: "power2.inOut" }, "-=0.4");
+            // In
+            tl.to(next, { opacity: 1, scale: 1, duration: 0.8, ease: "power2.inOut" }, "-=0.4");
             
-            // Stagger Elements
-            tl.to(innerElems, { y: 0, opacity: 1, duration: 0.8, stagger: 0.15, ease: "power3.out" }, "-=0.3");
+            // Stagger Elements (Improved Smoothness)
+            tl.to(innerElems, { y: 0, opacity: 1, duration: 1.2, stagger: 0.2, ease: "expo.out" }, "-=0.4");
 
             currentSlide = nextIndex;
         }
 
+        // COLOR UPDATE
         function updateUI(index) {
             const theme = slides[index].getAttribute('data-theme');
             const isLight = theme === 'light';
             
             if (isLight) {
-                // LIGHT THEME SETTINGS
                 document.body.classList.add('light-theme');
                 logo.classList.remove('white-logo');
                 logo.classList.add('original-logo');
-                
                 badge.className = "px-4 py-1.5 rounded-full bg-white/80 backdrop-blur text-xs font-bold tracking-widest uppercase border border-slate-300 text-[#030A8C] transition-all duration-500 shadow-sm";
                 footerText.classList.remove('text-white/40'); footerText.classList.add('text-slate-400');
-                prevBtn.style.borderColor = 'rgba(0,0,0,0.1)'; prevBtn.style.color = '#030A8C';
+                prevBtn.style.borderColor = 'rgba(3, 10, 140, 0.1)'; prevBtn.style.color = '#030A8C';
             } else {
-                // DARK THEME SETTINGS
                 document.body.classList.remove('light-theme');
                 logo.classList.add('white-logo');
                 logo.classList.remove('original-logo');
-                
                 badge.className = "px-4 py-1.5 rounded-full bg-white/10 backdrop-blur text-xs font-bold tracking-widest uppercase border border-white/20 text-white transition-all duration-500";
                 footerText.classList.add('text-white/40'); footerText.classList.remove('text-slate-400');
                 prevBtn.style.borderColor = 'rgba(255,255,255,0.2)'; prevBtn.style.color = 'white';
@@ -441,12 +490,12 @@
         }
         function closeModal() { document.getElementById('modal-overlay').classList.remove('open'); }
 
+        // INPUTS
         document.addEventListener('keydown', (e) => {
             if(e.key === 'ArrowRight' || e.key === 'ArrowDown') changeSlide(1);
             if(e.key === 'ArrowLeft' || e.key === 'ArrowUp') changeSlide(-1);
             if(e.key === 'Escape') closeModal();
         });
-
         document.addEventListener('touchstart', e => touchStart = e.changedTouches[0].screenX);
         document.addEventListener('touchend', e => {
             touchEnd = e.changedTouches[0].screenX;
@@ -454,14 +503,14 @@
             if (touchEnd - touchStart > 50) changeSlide(-1);
         });
 
-        // INIT
+        // START
         window.onload = () => {
             const firstSlide = slides[0];
             firstSlide.classList.add('active');
             gsap.set(firstSlide, { opacity: 1, visibility: 'visible' });
             gsap.fromTo(firstSlide.querySelectorAll('.anim-elem'), 
-                { y: 40, opacity: 0 }, 
-                { y: 0, opacity: 1, duration: 1, stagger: 0.2, ease: "power3.out", delay: 0.2 }
+                { y: 60, opacity: 0 }, 
+                { y: 0, opacity: 1, duration: 1.2, stagger: 0.2, ease: "expo.out", delay: 0.2 }
             );
             updateUI(0);
         };
